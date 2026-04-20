@@ -1,5 +1,5 @@
 import { CommentsDrawer } from "#/components/CommentsDrawer";
-import { isLoggedIn } from "#/auth/fakeAuth";
+import { isLoggedIn, getStoredAuthUser } from "#/auth/fakeAuth";
 import type { Joke } from "#/types";
 import {
   ArrowBigDown,
@@ -30,7 +30,11 @@ export function JokeCard({
   onDelete,
   isDeleting,
 }: JokeCardProps) {
-  const isDeleteDisabled = isDeleting || !isLoggedIn;
+  const user = getStoredAuthUser();
+  const isOwner = user && joke.userId === user.id;
+  const loggedIn = isLoggedIn();
+
+  const isDeleteDisabled = isDeleting || !isOwner;
 
   return (
     <div
@@ -47,24 +51,30 @@ export function JokeCard({
         >
           <button
             type="button"
-            className="inline-flex h-[1.4rem] w-[1.4rem] cursor-pointer items-center justify-center rounded-[0.4rem] border-0 bg-transparent text-[#8a6942] hover:bg-[#f7ebd8] hover:text-[#5f472a] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[#8a6942]"
-            onClick={() => onVote(joke.id, 1)}
-            aria-label="Upvote joke"
-            disabled={!isLoggedIn}
-            title={!isLoggedIn ? "Sign in to vote" : undefined}
+            className="inline-flex h-[1.4rem] w-[1.4rem] items-center justify-center rounded-[0.4rem] border-0 bg-transparent text-[#8a6942] hover:bg-[#f7ebd8] hover:text-[#5f472a] disabled:cursor-not-allowed disabled:opacity-45"
+            onClick={() => {
+              if (!loggedIn) return;
+              onVote(joke.id, 1);
+            }}
+            disabled={!loggedIn}
+            title={!loggedIn ? "Sign in to vote" : undefined}
           >
             <ArrowBigUp className="h-4 w-4" />
           </button>
+
           <span className="min-w-[1.3rem] text-center text-[0.84rem] font-black text-[#5c4b35]">
             {joke.score}
           </span>
+
           <button
             type="button"
-            className="inline-flex h-[1.4rem] w-[1.4rem] cursor-pointer items-center justify-center rounded-[0.4rem] border-0 bg-transparent text-[#8a6942] hover:bg-[#f7ebd8] hover:text-[#5f472a] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[#8a6942]"
-            onClick={() => onVote(joke.id, -1)}
-            aria-label="Downvote joke"
-            disabled={!isLoggedIn}
-            title={!isLoggedIn ? "Sign in to vote" : undefined}
+            className="inline-flex h-[1.4rem] w-[1.4rem] items-center justify-center rounded-[0.4rem] border-0 bg-transparent text-[#8a6942] hover:bg-[#f7ebd8] hover:text-[#5f472a] disabled:cursor-not-allowed disabled:opacity-45"
+            onClick={() => {
+              if (!loggedIn) return;
+              onVote(joke.id, -1);
+            }}
+            disabled={!loggedIn}
+            title={!loggedIn ? "Sign in to vote" : undefined}
           >
             <ArrowBigDown className="h-4 w-4" />
           </button>
@@ -84,22 +94,25 @@ export function JokeCard({
                   Top Joke
                 </span>
               ) : null}
+
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-[0.28rem] rounded-full border border-[#dfd7c8] bg-[#fffefb] px-[0.52rem] py-[0.2rem] text-[0.76rem] font-bold text-[#5c4a35] hover:border-[#e4c694] hover:bg-[#fff6e9]"
+                className="inline-flex items-center gap-[0.28rem] rounded-full border border-[#dfd7c8] bg-[#fffefb] px-[0.52rem] py-[0.2rem] text-[0.76rem] font-bold text-[#5c4a35] hover:border-[#e4c694] hover:bg-[#fff6e9]"
                 onClick={() => onToggleComments(joke.id)}
-                aria-label="View joke comments"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
                 <span>{joke.comments.length}</span>
               </button>
+
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-[0.28rem] rounded-full border border-[#efc7c7] bg-[#fff7f7] px-[0.52rem] py-[0.2rem] text-[0.76rem] font-bold text-[#8c2f2f] hover:border-[#e7a8a8] hover:bg-[#ffeded] disabled:cursor-not-allowed disabled:opacity-65"
-                onClick={() => onDelete(joke.id)}
-                aria-label="Delete joke"
+                className="inline-flex items-center gap-[0.28rem] rounded-full border border-[#efc7c7] bg-[#fff7f7] px-[0.52rem] py-[0.2rem] text-[0.76rem] font-bold text-[#8c2f2f] hover:border-[#e7a8a8] hover:bg-[#ffeded] disabled:cursor-not-allowed disabled:opacity-65"
+                onClick={() => {
+                  if (!isOwner) return;
+                  onDelete(joke.id);
+                }}
                 disabled={isDeleteDisabled}
-                title={!isLoggedIn ? "Sign in to delete jokes" : undefined}
+                title={!isOwner ? "You can only delete your own jokes" : undefined}
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>{isDeleting ? "Deleting..." : "Delete"}</span>

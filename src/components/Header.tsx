@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { MouseEvent } from "react";
-import { isLoggedIn } from "#/auth/fakeAuth";
+import { isLoggedIn, getStoredAuthUser } from "#/auth/fakeAuth";
+
 
 const primaryNavLinkClass =
   "border-b-2 border-transparent px-[0.05rem] py-[0.28rem] font-[650] text-[var(--ink-soft)] no-underline transition-colors duration-150 ease-in-out hover:text-[var(--ink-strong)]";
@@ -10,19 +11,21 @@ const disabledNavLinkClass =
   "cursor-not-allowed select-none opacity-45 hover:text-[var(--ink-soft)]";
 
 export default function Header() {
+  const user = getStoredAuthUser();
+const loggedIn = isLoggedIn();
   const handleDisabledAddJokeClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!isLoggedIn) {
+  if (!isLoggedIn()) {
       event.preventDefault();
     }
   };
 
-  const addJokeLinkClass = isLoggedIn
-    ? primaryNavLinkClass
-    : `${primaryNavLinkClass} ${disabledNavLinkClass}`;
+const addJokeLinkClass = isLoggedIn()
+  ? primaryNavLinkClass
+  : `${primaryNavLinkClass} ${disabledNavLinkClass}`;
 
-  const addJokeActiveClass = isLoggedIn
-    ? primaryNavLinkActiveClass
-    : `${primaryNavLinkClass} ${disabledNavLinkClass}`;
+const addJokeActiveClass = isLoggedIn()
+  ? primaryNavLinkActiveClass
+  : `${primaryNavLinkClass} ${disabledNavLinkClass}`;
 
   return (
     <header className="sticky top-0 z-50 border-b border-[rgba(234,217,194,0.8)] bg-[linear-gradient(180deg,rgba(255,252,246,0.86)_0%,rgba(255,247,235,0.74)_100%)] px-4 backdrop-blur-[10px]">
@@ -50,11 +53,11 @@ export default function Header() {
             className={addJokeLinkClass}
             activeProps={{ className: addJokeActiveClass }}
             onClick={handleDisabledAddJokeClick}
-            aria-disabled={!isLoggedIn}
-            title={!isLoggedIn ? "Sign in to add a joke" : undefined}
+            aria-disabled={!isLoggedIn()}
+            title={!isLoggedIn() ? "Sign in to add a joke" : undefined}
           >
             Add Joke
-          </Link>
+          </Link> 
           <Link
             to="/about"
             className={primaryNavLinkClass}
@@ -65,27 +68,38 @@ export default function Header() {
         </div>
 
         <div className="order-2 ml-auto flex items-center gap-2 text-sm sm:order-3">
-          <Link
-            to="/signin"
-            className="rounded-full border border-[#d9cbb3] bg-[#fffdf8] px-3 py-1.5 font-semibold text-[#6e5c47] no-underline transition-colors duration-150 hover:border-[#c8b393] hover:text-[#4b3b28]"
-            activeProps={{
-              className:
-                "rounded-full border border-[#c8b393] bg-[#fff8ea] px-3 py-1.5 font-semibold text-[#4b3b28] no-underline transition-colors duration-150",
-            }}
-          >
-            Signin
-          </Link>
-          <Link
-            to="/signup"
-            className="rounded-full border border-[#d78a41] bg-[linear-gradient(180deg,#ee9a49_0%,#d77420_100%)] px-3 py-1.5 font-semibold text-[#fff9f2] no-underline shadow-[0_6px_12px_rgba(180,83,9,0.2)] transition-[transform,box-shadow] duration-150 ease-in-out hover:-translate-y-px hover:shadow-[0_8px_14px_rgba(180,83,9,0.28)]"
-            activeProps={{
-              className:
-                "rounded-full border border-[#c46b1e] bg-[linear-gradient(180deg,#e38935_0%,#c66110_100%)] px-3 py-1.5 font-semibold text-[#fff9f2] no-underline shadow-[0_6px_12px_rgba(180,83,9,0.2)]",
-            }}
-          >
-            Signup
-          </Link>
-        </div>
+  {loggedIn && user ? (
+    <>
+      <span className="text-[#6e5c47]">{user.fullName}</span>
+
+      <button
+        onClick={() => {
+          localStorage.removeItem("devjokes-auth-user");
+          window.location.reload();
+        }}
+        className="rounded-full border border-[#d78a41] bg-[linear-gradient(180deg,#ee9a49_0%,#d77420_100%)] px-3 py-1.5 font-semibold text-[#fff9f2]"
+      >
+        Sign out
+      </button>
+    </>
+  ) : (
+    <>
+      <Link
+        to="/signin"
+        className="rounded-full border border-[#d9cbb3] bg-[#fffdf8] px-3 py-1.5 font-semibold text-[#6e5c47]"
+      >
+        Signin
+      </Link>
+
+      <Link
+        to="/signup"
+        className="rounded-full border border-[#d78a41] bg-[linear-gradient(180deg,#ee9a49_0%,#d77420_100%)] px-3 py-1.5 font-semibold text-[#fff9f2]"
+      >
+        Signup
+      </Link>
+    </>
+  )}
+</div>
       </nav>
     </header>
   );

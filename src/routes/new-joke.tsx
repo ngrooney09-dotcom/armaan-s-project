@@ -7,6 +7,7 @@ import {
 import { createJoke } from "#/serverFunctions/jokeFns";
 import { useServerFn } from "@tanstack/react-start";
 import type { Joke } from "#/types";
+import { getStoredAuthUser } from "#/auth/fakeAuth";
 
 export const Route = createFileRoute("/new-joke")({
   component: NewJokePage,
@@ -36,11 +37,20 @@ function NewJokePage() {
     if (!question || !answer) return;
 
     reset();
+    const user = getStoredAuthUser();
 
+if (!user) {
+  alert("You must be logged in");
+  return;
+}
     try {
       await mutateAsync({
-        data: { question, answer },
-      });
+  data: {
+    question,
+    answer,
+    userId: user.id, 
+  },
+});
 
       await navigate({ to: "/" });
     } catch {

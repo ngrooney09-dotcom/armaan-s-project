@@ -39,6 +39,7 @@ export class JokeService {
       .values({
         question: input.question.trim(),
         answer: input.answer.trim(),
+        userId: input.userId,
         score: 0,
       })
       .returning({
@@ -92,15 +93,20 @@ export class JokeService {
     return updatedJoke;
   }
 
-  async deleteJoke(input: DeleteJokeInput): Promise<void> {
-    const result = await this.db
-      .delete(jokesTable)
-      .where(eq(jokesTable.id, input.id));
+async deleteJoke(input: DeleteJokeInput): Promise<void> {
+  const joke = await this.db.query.jokesTable.findFirst({
+    where: (j, { eq }) => eq(j.id, input.id),
+  });
 
-    const wasDeleted = Number(result.rowCount ?? 0) > 0;
-
-    if (!wasDeleted) {
-      throw new Error("Joke not found.");
-    }
+  if (!joke) {
+    throw new Error("Joke not found.");
   }
-}
+
+  if (joke.userId !== input.userId) {
+    throw new Error("Not authorized to delete this joke");
+  }
+
+  await this.db
+    .delete(jokesTable)
+    .where(eq(jokesTable.id, input.id));
+}}
